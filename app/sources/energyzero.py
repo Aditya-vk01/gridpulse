@@ -16,6 +16,7 @@ BASE_URL = "https://api.energyzero.nl/v1/energyprices"
 HOURLY_INTERVAL = 4  # EnergyZero's code for hourly prices
 RESOLUTION_MINUTES = 60
 USAGE_TYPE_ELECTRICITY = 1
+MAX_PRICE_DECIMALS = 10  # matches the scale of price_points.price_eur_per_kwh
 
 
 class EnergyZeroError(Exception):
@@ -110,11 +111,18 @@ class EnergyZeroSource(PriceSource):
                 raise EnergyZeroDataError(f"Timestamp without timezone at index {i}: {point!r}")
             if isinstance(price, bool) or not isinstance(price, Decimal | int):
                 raise EnergyZeroDataError(f"Non-numeric price at index {i}: {point!r}")
+            price = Decimal(price)
+            # Trailing zeros don't count: 0.10000000000 fits exactly, 0.12345678901 doesn't.
+            if price.normalize().as_tuple().exponent < -MAX_PRICE_DECIMALS:
+                raise EnergyZeroDataError(
+                    f"Price at index {i} has more than {MAX_PRICE_DECIMALS} decimals "
+                    f"and cannot be stored without rounding: {point!r}"
+                )
             records.append(
                 PriceRecord(
                     start_utc=start.astimezone(UTC),
                     resolution_minutes=RESOLUTION_MINUTES,
-                    price_eur_per_kwh=Decimal(price),
+                    price_eur_per_kwh=price,
                     includes_vat=False,
                 )
             )

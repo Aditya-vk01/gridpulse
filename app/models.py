@@ -33,7 +33,7 @@ class PricePoint(Base):
     source: Mapped[str] = mapped_column(String(50))
     start_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     resolution_minutes: Mapped[int] = mapped_column(Integer)
-    price_eur_per_kwh: Mapped[Decimal] = mapped_column(Numeric(10, 6))
+    price_eur_per_kwh: Mapped[Decimal] = mapped_column(Numeric(16, 10))
     includes_vat: Mapped[bool] = mapped_column(Boolean)
     ingested_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
