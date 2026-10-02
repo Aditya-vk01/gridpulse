@@ -10,3 +10,12 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = ["integration: needs Docker; runs against a Testcontainers PostgreSQL 17"]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true

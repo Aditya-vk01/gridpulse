@@ -1,0 +1,7 @@
+-r requirements.txt
+pytest==9.1.1
+pytest-cov==7.1.0
+ruff==0.16.10
+testcontainers[postgres]==4.15.0
+# Starlette's TestClient prefers httpx2; plain httpx is deprecated there (Starlette >=1.2).
+httpx2==2.13.1

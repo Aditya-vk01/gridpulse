@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import func
@@ -79,7 +80,13 @@ def _positive_int(value: str) -> int:
     return n
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(
+    argv: list[str] | None = None,
+    *,
+    source: PriceSource | None = None,
+    session_factory: Callable[[], Session] | None = None,
+) -> int:
+    """CLI entry point. `source` and `session_factory` can be injected for tests."""
     parser = argparse.ArgumentParser(description="Ingest Dutch day-ahead electricity prices.")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--date", type=date.fromisoformat, help="Dutch calendar day, YYYY-MM-DD")
@@ -96,9 +103,10 @@ def main(argv: list[str] | None = None) -> int:
     from app.db import SessionLocal
     from app.sources.energyzero import EnergyZeroSource
 
-    source = EnergyZeroSource()
+    source = source or EnergyZeroSource()
+    session_factory = session_factory or SessionLocal
     failed = 0
-    with SessionLocal() as session:
+    with session_factory() as session:
         for day in _days_to_ingest(args):
             if ingest_day(session, source, day).status == STATUS_FAILED:
                 failed += 1

@@ -13,11 +13,14 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+# Callers (e.g. tests) can set attributes["configure_logger"] = False to keep their logging.
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
 
+# Use DATABASE_URL from Settings unless the caller already set a URL (e.g. tests).
 # Escape % because the .ini parser treats it as interpolation.
-config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))
 
 # add your model's MetaData object here
 # for 'autogenerate' support
